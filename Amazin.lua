@@ -7,7 +7,9 @@
 -------------------------------------------------
 local EMOTE_TOKENS_STEALTH = {
   "ROFL","LAUGH","GIGGLE","STARE","GRIN","SMIRK","CHUCKLE","WINK","SHUSH","SNICKER",
+  "ROAR","LICK",
 }
+
 
 -------------------------------------------------
 -- State
