@@ -1,4 +1,4 @@
--- Amazin v1.2.4 (Vanilla/Turtle 1.12, Lua 5.0-safe)
+-- Amazin v1.2.4 (Vanilla 1.12, Lua 5.0-safe)
 -- SavedVariables: AmazinDB
 -- Plays a random stealth-style emote when you press your watched Stealth action bar slot.
 

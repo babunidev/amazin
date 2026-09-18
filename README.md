@@ -1,4 +1,4 @@
-Amazin (WoW 1.12 / Turtle WoW)
+Amazin (WoW 1.12)
 
 Amazin fires a built-in emote when you press your Stealth button (by watching its action-bar slot). It’s Lua 5.0–safe, lightweight, and includes cooldown, chance control, a debug “watch” mode, and a rested XP reporter.
 
@@ -134,7 +134,7 @@ Limitations / Intentional behavior
 
 Only slot press trigger. No buff/icon scan (historically unreliable in 1.12).
 
-SAY/YELL blocked: Classic/Turtle block addon-driven /say and /yell in open world. EMOTE is allowed, hence Amazin uses DoEmote.
+SAY/YELL blocked: Some environments restrict addon-driven /say and /yell in the open world. Amazin uses DoEmote; available chat behavior depends on the environment.
 
 Bar changes: If you move Stealth to another slot or switch bar pages/layouts, update /amazin slot <n> accordingly.
 
@@ -183,7 +183,7 @@ Negligible. Only hooks UseAction, does a few integer checks and a random pick. N
 
 Compatibility
 
-Client: 1.12 (Vanilla/Turtle).
+Client: 1.12 (Vanilla).
 
 Locale: All. Tokens are English internally, which work on DE/other clients.
 
