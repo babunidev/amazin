@@ -1,3 +1,5 @@
+**Author:** Babuni.dev
+
 Amazin (WoW 1.12)
 
 Amazin fires a built-in emote when you press your Stealth button (by watching its action-bar slot). It’s Lua 5.0–safe, lightweight, and includes cooldown, chance control, a debug “watch” mode, and a rested XP reporter.
