@@ -1,228 +1,43 @@
+# Amazin
+
 **Author:** Babuni.dev
 
-Amazin (WoW 1.12)
+A stealth-themed emote addon that watches one configured action-bar slot. Pressing that slot may play a random built-in emote after a cooldown, then delegates to the original action. It does not detect successful Stealth casts or actual stealth state. A separate command reports rested XP.
 
-Amazin fires a built-in emote when you press your Stealth button (by watching its action-bar slot). It’s Lua 5.0–safe, lightweight, and includes cooldown, chance control, a debug “watch” mode, and a rested XP reporter.
+## Installation and use
 
-Works on German clients (uses English DoEmote tokens internally).
+Install `Amazin.lua` and `Amazin.toc` under `Interface/AddOns/Amazin/`, restart the client and enable it. Run `/amazin watch`, press the intended button, note its slot, set `/amazin slot <n>`, then toggle watch off.
 
+| Command | Source behavior |
+| --- | --- |
+| `/amazin slot <n>` | Saves watched numeric slot |
+| `/amazin watch` | Toggles local slot reports |
+| `/amazin chance <0-100>` | Sets probability; default 100% |
+| `/amazin scd <0-60>` | Sets cooldown seconds; default 6 |
+| `/amazin rexp` | Reports rested XP and rounded bubbles, capped at 30 |
+| `/amazin info` | Shows slot, chance, cooldown and pool size |
+| `/amazin reset` | Clears only the watched slot |
+| `/amazin save` | Copies current settings to the DB |
 
----
+**Version discrepancy:** Lua labels itself v1.2.4; the actual TOC declares v1.1.0. TOC notes list obsolete commands including `emote`, `stealth`, `debug` and omit `rexp`. This documentation records the discrepancy without modifying metadata. The [historical README](docs/HISTORICAL_README.md) includes a suggested v1.2.4 TOC block, not the committed manifest.
 
-What it does
+## Limitations and verification
 
-Stealth press → emote: When you press the configured action slot (your Stealth button), Amazin plays a random stealth-flavored emote (e.g., /rofl, /giggle, /stare, /grin, /smirk).
+- Resolve Lua v1.2.4 versus TOC v1.1.0 and stale TOC command descriptions before a release; do not silently choose a version.
+- Verify 1.12 event callback conventions, login/logout persistence and logout before lazy hydration.
+- Check watched-slot presses with failed casts, bar paging and another UseAction wrapper.
+- Exercise 0%/100% chance, cooldown boundaries, startup uptime, reset and rested-XP edge cases.
+- Validate all 12 built-in tokens and fallback behavior on intended locales; prior README compatibility claims are not test results.
 
-Cooldown: Prevents spam if you tap the button repeatedly.
+## Evidence and status
 
-Chance %: Optional probability so it doesn’t fire every time.
+Reviewed on 2026-10-26 against `main` at [e96070a](https://github.com/babunidev/amazin/commit/e96070a7cf16ed4605caafaf018a566f74d63207). Current Lua, TOC, README and dated commit history were inspected. Source describes implementation; it does not establish successful operation. Historical intent is reconstructed only where labeled. No in-client test or automated test was executed during this documentation pass.
 
-Rested XP: /amazin rexp prints rested XP in bubbles (max 30 = 1.5 levels) and raw XP.
+## Documentation
 
-Watch mode: Temporarily prints which slot you pressed to help you find the Stealth slot ID.
+- [Concept](CONCEPT.md) · [Design](docs/DESIGN.md) · [Content](docs/CONTENT.md)
+- [Architecture](docs/ARCHITECTURE.md) · [Decisions](docs/DECISIONS.md)
+- [Roadmap](ROADMAP.md) · [Changelog](CHANGELOG.md) · [Development journal](docs/DEVLOG.md)
+- [AI collaboration](docs/AI_COLLABORATION.md) · [Contributor instructions](AGENTS.md)
 
-
-> Design choice: No aura/icon detection (Classic 1.12 icon checks are unreliable). Trigger is only the watched slot press.
-
-
-
-
----
-
-Files & Install
-
-Interface/
-└─ AddOns/
-   └─ Amazin/
-      ├─ Amazin.toc
-      └─ Amazin.lua
-
-1. Copy the folder to Interface\AddOns\.
-
-
-2. Enable Amazin on the character select AddOns screen.
-
-
-
-Amazin.toc
-
-## Interface: 11200
-## Title: Amazin
-## Version: 1.2.4
-## Notes: Stealth emotes on watched slot + rested XP reporter. Commands: /amazin slot, watch, chance, scd, rexp, info, reset, save
-## SavedVariables: AmazinDB
-
-Amazin.lua
-
-
----
-
-Quick setup (first time)
-
-1. Put Stealth on an action-bar slot (e.g., slot 3).
-
-
-2. /amazin watch → press your Stealth button → note the printed slot number.
-
-
-3. /amazin slot <n> (e.g., /amazin slot 3)
-
-
-4. /amazin watch again to turn watch mode OFF.
-
-
-
-Done. Each time you press that slot, Amazin may play an emote (respecting cooldown & chance).
-
-
----
-
-Commands (all start with /amazin)
-
-Command	What it does	Example
-
-slot <n>	Set the watched action slot (saved).	/amazin slot 3
-watch	Toggle debug: prints pressed slot N on any action.	/amazin watch
-chance <0-100>	Set % chance to emote on press (default 100).	/amazin chance 60
-scd <seconds>	Set stealth emote cooldown (default 6, max 60).	/amazin scd 10
-rexp	Print rested XP (bubbles + raw XP).	/amazin rexp
-info	Show current settings.	/amazin info
-reset	Clear saved slot.	/amazin reset
-save	Manually save settings.	/amazin save
-
-
-
----
-
-Emote pool (edit if you want)
-
-Amazin uses built-in emotes (no custom text). Default pool in Amazin.lua:
-
-ROFL, LAUGH, GIGGLE, STARE, GRIN, SMIRK, CHUCKLE, WINK, SHUSH, SNICKER
-
-> Token → slash mapping examples:
-LAUGH = /lol, ROFL = /rofl, GIGGLE = /giggle, STARE = /stare, GRIN = /grin, etc.
-On German clients, DoEmote("LAUGH") still works (tokens stay English).
-
-
-
-To customize: open Amazin.lua, edit EMOTE_TOKENS_STEALTH.
-
-
----
-
-How it works (technical)
-
-Hooks UseAction(slot, ...) (Classic 1.12 API).
-
-If slot == WATCH_SLOT, it checks cooldown & chance, then calls DoEmote(token).
-
-Uses account-wide SavedVariables AmazinDB:
-
-slot (number) — watched action slot
-
-stealth_chance (0–100) — % chance to emote
-
-stealth_cd (seconds) — stealth emote cooldown
-
-
-
-No frames/timers running constantly; it’s basically idle until you press an action.
-
-
----
-
-Limitations / Intentional behavior
-
-Only slot press trigger. No buff/icon scan (historically unreliable in 1.12).
-
-SAY/YELL blocked: Some environments restrict addon-driven /say and /yell in the open world. Amazin uses DoEmote; available chat behavior depends on the environment.
-
-Bar changes: If you move Stealth to another slot or switch bar pages/layouts, update /amazin slot <n> accordingly.
-
-
-
----
-
-Troubleshooting
-
-“Nothing happens.”
-
-/amazin info → check slot, cooldown, chance.
-
-Ensure your Stealth button is really in that slot. Use /amazin watch to confirm.
-
-If chance is low or cooldown is long, it might just be waiting.
-
-
-Slot number confusion.
-
-Turn on /amazin watch, press the button you expect to be Stealth, read the printed pressed slot N.
-
-
-Weird chat errors (Lua).
-
-Make sure the file is saved as ANSI or UTF-8 (no BOM).
-
-Amazin avoids string.match and :format (Lua 5.0 quirks), so you shouldn’t see those errors on the shipped version.
-
-
-Conflicts.
-
-If another addon replaces UseAction, load order can matter. Amazin wraps the original; most setups are fine.
-
-
-
-
----
-
-Performance
-
-Negligible. Only hooks UseAction, does a few integer checks and a random pick. No per-frame work.
-
-
----
-
-Compatibility
-
-Client: 1.12 (Vanilla).
-
-Locale: All. Tokens are English internally, which work on DE/other clients.
-
-Class: Built for Rogue Stealth use, but technically watches any slot you point it at.
-
-
-
----
-
-Changelog (highlights)
-
-1.2.4 — Added /amazin rexp rested XP reporter; README polish.
-
-1.2.3 — Removed string.format usage to avoid encoding oddities; pure concatenation.
-
-1.2.2 — Removed string.match; Lua 5.0-safe command parser; balanced ends.
-
-1.2.1 — Fixed info display to use string.format (later replaced).
-
-1.2.0 — Simplified to Stealth-only via watched slot.
-
-1.1.x — Earlier versions with aura/icon detection and general emote pool (dropped).
-
-1.0.0 — Initial slot-based emote idea.
-
-
-
----
-
-License
-
-MIT. Use it, fork it, ship it. Attribution appreciated.
-
-## Development documentation
-
-- [Concept](CONCEPT.md) · [Roadmap](ROADMAP.md) · [Changelog](CHANGELOG.md)
-- [Architecture](docs/ARCHITECTURE.md) · [Design evidence](docs/DECISIONS.md) · [Development journal](docs/DEVLOG.md)
-- [AI collaborator rules](AGENTS.md)
-
-The development journal distinguishes original author direction, source-based reconstruction, AI assistance, and independently verified behavior.
+The [historical README](docs/HISTORICAL_README.md) is retained verbatim as prior documentation, including any outdated claims. Current source and the qualifications above take precedence.
